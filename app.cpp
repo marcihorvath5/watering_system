@@ -7,15 +7,15 @@
 #include "gpio.h"
 void SetupHardware() {
 	// Hardware setup code here
-	gpio::SetFunction(1, 16, gpio::Function::GPIO);
-	gpio::SetDirection(4, gpio::Direction::OUTPUT);
+	gpio::SetFunction(pins::ArduinoPin::D2, gpio::Function::GPIO);
+	gpio::SetDirection(pins::ArduinoPin::D2, gpio::Direction::OUTPUT);
 }
 
 void FirstFunction() {
 	// Your function implementation here
-	gpio::Write(4, gpio::Level::High);
+	gpio::Write(pins::ArduinoPin::D2, gpio::Level::High);
 	delay(1000);
-	gpio::Write(4, gpio::Level::Low);
+	gpio::Write(pins::ArduinoPin::D2, gpio::Level::Low);
 	delay(1000);
 }
 

@@ -27,6 +27,9 @@
     <ClCompile Include="gpio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PinMapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.flower.vsarduino.h">
@@ -39,6 +42,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pins.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.watering_system.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PinMapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

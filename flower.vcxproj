@@ -81,6 +81,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="PinMapping.cpp" />
     <ClCompile Include="watering_system.ino">
       <FileType>CppCode</FileType>
       <DeploymentContent>true</DeploymentContent>
@@ -97,6 +98,7 @@
   <ItemGroup>
     <ClInclude Include="app.h" />
     <ClInclude Include="gpio.h" />
+    <ClInclude Include="PinMapping.h" />
     <ClInclude Include="pins.h" />
     <ClInclude Include="__vm\.flower.vsarduino.h" />
     <ClInclude Include="__vm\.watering_system.vsarduino.h" />

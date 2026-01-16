@@ -2,6 +2,8 @@
 
 #pragma once
 #include <stdint.h>
+#include "pins.h"
+#include "PinMapping.h"
 
 // Enum for pin modes
 namespace gpio
@@ -25,10 +27,10 @@ namespace gpio
 	};
 
 	// This area defines the functions to pins and setting their bits
-	void SetDirection(uint8_t pinNumber, Direction direction); // Sets the direction of a pin (input/output)
-	void SetFunction(uint8_t portNumber, uint8_t pinNumber, Function function); // Sets the function of a pin (GPIO/Alternate)
+	void SetDirection(pins::ArduinoPin pin, Direction direction); // Sets the direction of a pin (input/output)
+	void SetFunction(pins::ArduinoPin pin, Function function); // Sets the function of a pin (GPIO/Alternate)
 	void UnlockPinFunctionWriteProtection(); // Unlocks the pin function write protection
 	void LockPinFunctionWriteProtection(); // Locks the pin function write protection
-	void Write(uint8_t pinNumber, gpio::Level state); // Writes a level (high/low) to a pin
+	void Write(pins::ArduinoPin pin, gpio::Level state); // Writes a level (high/low) to a pin
 }
 
