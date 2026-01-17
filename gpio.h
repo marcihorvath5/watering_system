@@ -11,7 +11,8 @@ namespace gpio
 	// Enum for pin functions
 	enum class Function: uint8_t
 	{
-		GPIO
+		GPIO,
+		I2C,
 	};
 	// Enum for pin directions
 	enum class Direction : uint8_t
@@ -32,5 +33,8 @@ namespace gpio
 	void UnlockPinFunctionWriteProtection(); // Unlocks the pin function write protection
 	void LockPinFunctionWriteProtection(); // Locks the pin function write protection
 	void Write(pins::ArduinoPin pin, gpio::Level state); // Writes a level (high/low) to a pin
+	void StartI2C();
+	void ReadI2C();
+	void StopI2C();
 }
 

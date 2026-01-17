@@ -2,8 +2,7 @@
 #include <stdint.h>
 namespace pins
 {
-	// Enum for pins
-	// TODO: Maybe add flags for PWM, I2C, SPI, UART capabilities 
+	// Enum for pins 
 	typedef enum
 	{
 		D0,		// Digital Pin 0/Rx/P301

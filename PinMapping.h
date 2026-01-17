@@ -8,6 +8,8 @@
 
 namespace PinMapping
 {
+	// TODO: Maybe add flags for PWM, I2C, SPI, UART capabilities
+	// struct to describe a pin's port and bit
 	typedef struct
 	{
 		uint8_t port;
