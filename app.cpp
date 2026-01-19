@@ -7,8 +7,14 @@
 #include "gpio.h"
 void SetupHardware() {
 	// Hardware setup code here
-	gpio::SetFunction(pins::ArduinoPin::D18, gpio::Function::I2C);
+	Serial.print("Peripheral clock frequency: ");
+	
 	//gpio::SetDirection(pins::ArduinoPin::D18, gpio::Direction::OUTPUT);
+	gpio::SetFunction(pins::ArduinoPin::D18, gpio::Function::I2C);
+	gpio::SetFunction(pins::ArduinoPin::D19, gpio::Function::I2C);
+
+	gpio::InitializeI2C();
+	
 }
 
 void FirstFunction() {
