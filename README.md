@@ -10,7 +10,6 @@ Az automata öntöző rendszer kifejlesztésének célja egy olyan autonóm, be�
 - **Folyamatosan monitorozza** a talaj nedvességtartalmát egy kapacitív szenzor segítségével
 - **Intelligens döntéseket hoz** az öntözés időpontjáról és időtartamáról
 - **Autonóm módon végzi** az öntözési ciklus fizikai megvalósítását
-- **Tanulságait** jegyzi fel a fejlesztési folyamatban, különösen az alacsony szintű hardverkommunikációban
 
 A projekt során lehetőségem nyílt megismerkedni az embedded szoftver alacsony szintű aspektusaival – szemben az Arduino-s absztrakciós rétegek gyakori használatával, a baremetalos hardverregiszter-kezelésre helyeztem a hangsúlyt. Ez az Arduino R4 WiFi mikrokontroller RA4M1 magja révén lehetséges, amely egyenes 
 hozzáférést biztosít a mikrokontroller **periféria regisztereinek** (pl. GPIO, I2C, 
