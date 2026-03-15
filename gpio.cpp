@@ -17,6 +17,7 @@ namespace gpio
 	static volatile R_PORT0_Type* const PORT1 = R_PORT1; // PORT1 register base address
 	static volatile R_PFS_Type* const PinFunctionSelect = R_PFS; // PFS register base address
 	static volatile auto* const SCI = R_SCI1; // SCI1 register base address
+	static volatile R_IIC0_Type* IIC = R_IIC1;
 	static volatile auto* const MSTP = R_MSTP; // MSTP register base address
 	static volatile R_SYSTEM_Type* const systemClockDivision= R_SYSTEM;
 	
@@ -70,18 +71,17 @@ namespace gpio
 			// Configure for I2C function
 			pinFunctionRegister |= (1u << 16); // Set PmnPFS bit 16 to 1 for peripheral function
 			pinFunctionRegister &= ~(I2CFunctionMask << I2CFunctionShift); // Clear bits 24-28
-			pinFunctionRegister &= ~(1u << 1); // Clear bits 24-28
+			pinFunctionRegister &= ~(1u << 1); // Clear bit 1
 			pinFunctionRegister |= (I2CFunctionBits << I2CFunctionShift); // Set bits 24-28 for I2C function
 			pinFunctionRegister |= (1u << 6); // Set bit 6 to enable open-drain output
-			
+			pinFunctionRegister |= (1u << 4); // Set bit 4 to enable open-drain output
 			break;
 		default:
 			break;
 		}
 
-		Serial.print("PmnPFS regiszter: ");
-		Serial.print(pinFunctionRegister,BIN);
-		Serial.println();
+		Serial.print("Modified register: ");
+		Serial.print(pinFunctionRegister,HEX);
 		Serial.println();
 	}
 
@@ -119,77 +119,256 @@ namespace gpio
 
 	void InitializeI2C()
 	{
-		uint8_t highImpedanceBits = 0b11; // Bits to set SCL/SDA in high impedance since it is needed to IIC init
-		volatile auto& portProtectRegister = systemClockDivision->PRCR;
-		Serial.print("Original PRCR register: ");
-		Serial.print(portProtectRegister, BIN);
-		Serial.println();
+		volatile uint8_t& iccr1Register = IIC->ICCR1; // Reference to IIC Register1
+		Serial.print("Original IIC IICR1: ");
+		Serial.println(iccr1Register, HEX);
 
 		volatile auto& moduleStopControlRegister = MSTP->MSTPCRB; // Reference to the MSTPCRB register
 		Serial.print("Original MSTPCRB register: ");
-		Serial.print(moduleStopControlRegister, BIN);
+		Serial.print(moduleStopControlRegister, HEX);
 		Serial.println();
 
-		volatile auto& simr3Register = SCI->SIMR3; // Reference to the SIMR3 register, here are the SCL/SDA high impedance bits
-		Serial.print("Original SCI SIMR3 register: ");
-		Serial.print(simr3Register, HEX);
-		Serial.println();
+		volatile uint8_t& icserRegister = IIC->ICSER; // Reference to IIC Status enable register to disable listen to slave addresses
+		Serial.print("riginal IIC ICSER: ");
+		Serial.println(icserRegister, HEX);
 
-		volatile auto& smrRegister = SCI->SMR; // Reference to the SMR register Serial Mode Register
-		Serial.print("Original SCI SMR register: ");
-		Serial.print(smrRegister, BIN);
-		Serial.println();
+		volatile uint8_t& icmr1Register = IIC->ICMR1; // Reference to ICMR1 register which holds the clock settings
+		Serial.print("Original IIC ICMR1 : ");
+		Serial.println(icmr1Register, HEX);
 
-		volatile auto& scmrRegister = SCI->SCMR; // Reference to the SCMR register Smart Card Mode Register
-		Serial.print("Original SCI SCMR register: ");
-		Serial.print(scmrRegister, BIN);
-		Serial.println();
+		volatile uint8_t& icbrlRegister = IIC->ICBRL;
+		Serial.print("Original IIC ICBRL: ");
+		Serial.println(icbrlRegister, HEX);
 
-		volatile uint8_t& brrRegister = SCI->BRR; // Reference to the BRR register Bit Rate Register
-		Serial.print("Original SCI BRR register: ");
-		Serial.print(brrRegister, HEX);
+		volatile uint8_t& icbrhRegister = IIC->ICBRH;
+		Serial.print("Original IIC ICBRH: ");
+		Serial.println(icbrlRegister, HEX);
+
+		volatile uint8_t& icmr2Register = IIC->ICMR2;
+		Serial.print("Original IIC ICMR2: ");
+		Serial.println(icmr2Register, HEX);
+
+		volatile uint8_t& icmr3Register = IIC->ICMR3;
+		Serial.print("Original IIC ICMR3: ");
+		Serial.println(icmr3Register, HEX);
+
+		volatile uint8_t& iciferRegister = IIC->ICFER; // Reference to Function enable register
+		Serial.print("Original IIC ICIFER: ");
+		Serial.println(iciferRegister, HEX);
 
 		// Cancel module stop for IIC1 and SCI1
 		moduleStopControlRegister &= ~(1u << 8); // Clear MSTPB 8 to cancel the module stop IIC1
+		moduleStopControlRegister &= ~(1u << 9); // Clear MSTPB 8 to cancel the module stop IIC1
 		moduleStopControlRegister &= ~(1u << 30); // Clear MSTPB 30 to cancel the module stop SCI1
+		moduleStopControlRegister &= ~(1u << 31); // Clear MSTPB 30 to cancel the module stop SCI1
 		Serial.print("Modified MSTPCRB register: ");
-		Serial.print(moduleStopControlRegister, BIN);
+		Serial.print(moduleStopControlRegister, HEX);
 		Serial.println();
 
-		// 2. step: Configure SCI registers for I2C operation
-		// Set SCL and SDA to high impedance
-		simr3Register = 0xF0; // Set SIMR3 register to 0xF0 1111 0000 to set SCL/SDA to high impedance
-		Serial.print("Modified SCI SIMR3 register: ");
-		Serial.print(simr3Register, HEX);
-		Serial.println();
+		iccr1Register &= ~(1u << 7); // Disable SDA and SCL it is needed to IIC init
+		Serial.print("Modified ICCR ICCR1: ");
+		Serial.println(iccr1Register, HEX);
 
-		// 3. step: Configure SMR and SCMR registers
-		smrRegister = 0x00; // Set SMR register to 0x00 0000 0000 to select clock source PCLK
-		Serial.print("Modified SCI SMR register: ");
-		Serial.print(smrRegister, BIN);
-		Serial.println();
+		// I2C Bus Interface Internal Reset
+		iccr1Register |= (1u << 6); // 1: Initiate IIC reset or internal reset.
+		Serial.print("ICCR ICCR1 after resetting IIC: ");
+		Serial.println(iccr1Register, HEX);
 
-		scmrRegister |= (1u << 3); // Set SCMR bit 3 to 1 to set Transfer with MSB first
-		scmrRegister &= ~(1u << 2); // Clear SCMR bit 2 to 0 to disable data reverse
-		scmrRegister &= ~(1u << 0); // Clear SCMR bit 0 to 0 to disable smart card mode
-		Serial.print("Modified SCI SCMR register: ");
-		Serial.print(scmrRegister, BIN);
-		Serial.println();
+		// Set ICE in ICCR1 to 1
+		iccr1Register |= (1u << 7); // Internal reset, SCLn and SDAn pins in active state
+		Serial.print("ICCR1 after setting SCL and SDA into active state: ");
+		Serial.println(iccr1Register, HEX);
 
-		// Step 4: Set the baud rate for I2C communication
+		// Disable to listening Slave and Broadcast adresses it means set ICSER to 0x00
+		icserRegister = 0x00; // Set all bits to 0 since we are Master
+		Serial.print("Modified IIC ICSER: ");
+		Serial.println(icserRegister, HEX);
+
+		// Assuming PCLK is 24 MHz and desired I2C clock is 100 kHz
+		uint32_t pclkb_hz = R_FSP_SystemClockHzGet(FSP_PRIV_CLOCK_PCLKB);
+		Serial.print("PCLKB frequency: ");
+		Serial.println(pclkb_hz);
+
+		// Setting PCLKB to initial HZ and enabling MST|TRS write
+		icmr1Register |= (11u << 4);
+		icmr1Register |= (1u << 7); // Enable MST|TRS write
+		Serial.print("Modified ICC ICMR1: ");
+		Serial.println(icmr1Register, HEX);
+
+		// Setting ICBRL and ICBRH
+		icbrhRegister = 0xFF;
+		Serial.print("Modified ICBRH: ");
+		Serial.println(icbrhRegister, HEX);
+
+		icbrlRegister = 0xFF;
+		Serial.print("Modified ICBRL: ");
+		Serial.println(icbrlRegister, HEX);
+
+		// Setting ICMR2 and ICMR3 these are specs to comm.
+		icmr2Register &= ~(0b111 << 4);
+		Serial.print("Modified IIC ICMRE2: ");
+		Serial.println(icmr2Register, HEX);
+
+		icmr3Register = 0x50;
+		Serial.print("Modified IIC ICMRE3: ");
+		Serial.println(icmr3Register, HEX);
+
+		// Set function enable register
+		iciferRegister = 0x40; // Disable Digital noise filter and activate ssynchronus SCL
+		Serial.print("Modified IIC ICIFER: ");
+		Serial.println(iciferRegister, HEX);
 		
-		brrRegister = 0x0E; // Set BRR register to 0x0E(14) for 100 kHz I2C clock assuming PCLK is 48 MHz
-		Serial.print("Modified SCI BRR register(dec): ");
-		Serial.println(brrRegister, DEC);
+		// Release from the internal reset state
+		iccr1Register &= ~(1u << 6); // 1: Initiate IIC reset or internal reset.
+		Serial.print("ICCR ICCR1 after resetting IIC: ");
+		Serial.println(iccr1Register, HEX);
+
+		// It was maybe the wrong approach
+		//uint8_t highImpedanceBits = 0b11; // Bits to set SCL/SDA in high impedance since it is needed to IIC init
+		//
+		///*Section for references to register*/
+		//volatile auto& portProtectRegister = systemClockDivision->PRCR;
+		//Serial.print("Original PRCR register: ");
+		//Serial.print(portProtectRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& moduleStopControlRegister = MSTP->MSTPCRB; // Reference to the MSTPCRB register
+		//Serial.print("Original MSTPCRB register: ");
+		//Serial.print(moduleStopControlRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& simr3Register = SCI->SIMR3; // Reference to the SIMR3 register, here are the SCL/SDA high impedance bits
+		//Serial.print("Original SCI SIMR3 register: ");
+		//Serial.print(simr3Register, HEX);
+		//Serial.println();
+
+		//volatile auto& smrRegister = SCI->SMR; // Reference to the SMR register Serial Mode Register
+		//Serial.print("Original SCI SMR register: ");
+		//Serial.print(smrRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& scmrRegister = SCI->SCMR; // Reference to the SCMR register Smart Card Mode Register
+		//Serial.print("Original SCI SCMR register: ");
+		//Serial.print(scmrRegister, BIN);
+		//Serial.println();
+
+		//volatile uint8_t& brrRegister = SCI->BRR; // Reference to the BRR register Bit Rate Register
+		//Serial.print("Original SCI BRR register: ");
+		//Serial.print(brrRegister, HEX);
+		//Serial.println();
+		///*<------------------------------------------------------------------------------------------------------->*/
 
 		
-		// Assuming PCLK is 48 MHz and desired I2C clock is 100 kHz
-		/*uint32_t pclka_hz = R_FSP_SystemClockHzGet(FSP_PRIV_CLOCK_PCLKA);
-		Serial.print("PCLKA frequency: ");
-		Serial.println(pclka_hz);
 
-		uint32_t iclk_hz = R_FSP_SystemClockHzGet(FSP_PRIV_CLOCK_ICLK);
-		Serial.print("ICLK frequency: ");
-		Serial.println(iclk_hz);*/
+		//// 2. step: Configure SCI registers for I2C operation
+		//// Set SCL and SDA to high impedance
+		//simr3Register = 0xF0; // Set SIMR3 register to 0xF0 1111 0000 to set SCL/SDA to high impedance
+		//Serial.print("Modified SCI SIMR3 register: ");
+		//Serial.print(simr3Register, HEX);
+		//Serial.println();
+
+		//// 3. step: Configure SMR and SCMR registers
+		//smrRegister = 0x00; // Set SMR register to 0x00 0000 0000 to select clock source PCLK
+		//Serial.print("Modified SCI SMR register: ");
+		//Serial.print(smrRegister, BIN);
+		//Serial.println();
+
+		//scmrRegister |= (1u << 3); // Set SCMR bit 3 to 1 to set Transfer with MSB first
+		//scmrRegister &= ~(1u << 2); // Clear SCMR bit 2 to 0 to disable data reverse
+		//scmrRegister &= ~(1u << 0); // Clear SCMR bit 0 to 0 to disable smart card mode
+		//Serial.print("Modified SCI SCMR register: ");
+		//Serial.print(scmrRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& semrRegister = SCI->SEMR; // Reference to the SEMR register Serial Extended Mode Register
+		//Serial.print("Original SCI SEMR register: ");
+		//Serial.print(semrRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& snfrRegister = SCI->SNFR; // Reference to the SNFR register Serial Noise Filter Register
+		//Serial.print("Original SCI SNFR register: ");
+		//Serial.print(snfrRegister, BIN);
+		//Serial.println();
+
+		//volatile auto& simr1Register = SCI->SIMR1; // Reference to the SIMR1 register Serial I2C Mode Register 1
+		//Serial.print("Original SCI SIMR1 register: ");
+		//Serial.print(simr1Register, BIN);
+		//Serial.println();
+
+		//volatile auto& simr2Register = SCI->SIMR2; // Reference to the SIMR2 register Serial I2C Mode Register 2
+		//Serial.print("Original SCI SIMR2 register: ");
+		//Serial.print(simr2Register, BIN);
+		//Serial.println();
+
+		//volatile auto& spmrRegister = SCI->SPMR; // Reference to the SPMR register Serial Pin Mode Register
+		//Serial.print("Original SCI SPMR register: ");
+		//Serial.print(spmrRegister, BIN);	
+		//Serial.println();
+
+		//volatile auto& scrRegister = SCI->SCR; // Reference to the SCR register Serial Control Register
+		//Serial.print("Original SCI SCR register: ");
+		//Serial.print(scrRegister, BIN);
+		//Serial.println();
+	
+
+		//// Step 4: Set the baud rate for I2C communication
+		//
+		//brrRegister = 0x0E; // Set BRR register to 0x0E(14) for 100 kHz I2C clock assuming PCLK is 48 MHz
+		//Serial.print("Modified SCI BRR register(dec): ");
+		//Serial.println(brrRegister, DEC);
+
+		//
+		
+
+		//uint32_t iclk_hz = R_FSP_SystemClockHzGet(FSP_PRIV_CLOCK_ICLK);
+		//Serial.print("ICLK frequency: ");
+		//Serial.println(iclk_hz);*/
+
+		///* 5.Step:Write the value obtained by correcting a bit rate error in
+		//	MDDR. This step is not required if SEMR.BRME is set
+		//	to 0.
+		//	It is not neccessary since in my case BRME is already 0*/
+
+		///* 6.Step: Set the values in SEMR, SNFR, SIMR1, SIMR2, and SPMR 
+		//- In SEMR, set NFEN and BRME.
+		//- In SNFR, set NFCS[2:0].
+		//- In SIMR1, set IICM to 1 and set IICDL[4:0] as required.
+		//- In SIMR2, set IICACKT and IICCSC to 1 and set IICINTM as required.
+		//- In SPMR, set all the bits to 0.*/ 
+		//
+		//semrRegister |= (1u << 5); // Set SEMR bit 5 NFEN to enable noise filter
+		//Serial.print("Modified SCI SEMR register: ");
+		//Serial.print(semrRegister, BIN);
+		//Serial.println();	
+
+		//snfrRegister = 0x01; // Set SNFR NFCS[2:0] to 001 to set noise filter clock select
+		//Serial.print("Modified SCI SNFR register: ");
+		//Serial.print(SCI->SNFR, BIN);
+		//Serial.println();
+
+		//simr1Register = 0x01; // Set SIMR1 IICM bit to 1 to enable I2C mode and Clear IICDL[4:0] bits
+		//Serial.print("Modified SCI SIMR1 register: ");
+		//Serial.print(simr1Register, BIN);
+		//Serial.println();
+
+		//simr2Register = 0b00000010; // Set SIMR2 IICACKT bit to 1 to set ACK/NACK transmit
+		//Serial.print("Modified SCI SIMR2 register: ");
+		//Serial.print(simr2Register, BIN);
+		//Serial.println();
+
+		//spmrRegister = 0x00; // Set SPMR register to 0x00 to set all bits to 0
+		//Serial.print("Modified SCI SPMR register: ");
+		//Serial.print(spmrRegister, BIN);
+		//Serial.println();
+
+		///* 7.Step: Set SCR.RE and TE to 1 and set SCR.TIE, RIE and TEIE 
+		//Then, set SCR.TIE, RIE, and
+		//TEIE (for transmission and when SIMR2.IICINTM is 1,
+		//set RIE to 0)*/
+
+		//scrRegister = 0b00110000; // Set SCR register to enable SCL and SDA
+		//Serial.print("Modified SCR:");
+		//Serial.print(scrRegister, BIN);
+		//Serial.println();
 	}
 }
